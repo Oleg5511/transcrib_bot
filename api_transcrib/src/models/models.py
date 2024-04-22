@@ -5,9 +5,9 @@ from sqlalchemy.dialects.postgresql import UUID
 from db.postgres import Base
 
 class User(Base):
-    __tablename__ = "users"
+    __tablename__ = "user"
 
-    id = Column(
+    user_id = Column(
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
@@ -16,7 +16,7 @@ class User(Base):
     )
     create_dttm = Column(DateTime, default=datetime.utcnow)
     name = Column(String(255), nullable=True)
-    telegram_nick = Column(String(255), nullable=True)
+    # telegram_nick = Column(String(255), nullable=True)
     email = Column(String(255), nullable=False)
 
     def __init__(
@@ -36,7 +36,7 @@ class User(Base):
 class File(Base):
     __tablename__ = "files"
 
-    file = Column(
+    file_id = Column(
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
@@ -76,6 +76,11 @@ class AnalysisProcess(Base):
         unique=True,
         nullable=False,
     )
+    user_id = Column(
+        UUID(as_uuid=True),
+        unique=False,
+        nullable=False
+    )
     file_id = Column(
         UUID(as_uuid=True),
         unique=True,
@@ -86,16 +91,17 @@ class AnalysisProcess(Base):
 
 
     def __init__(
-        self, proc_id: str, file_id: str, create_dttm: str, file_lenth: str
+        self, proc_id: str, file_id: str, user_id: str, create_dttm: str, file_lenth: str
     ) -> None:
         self.proc_id = proc_id
+        self.user_id = user_id
         self.file_id = file_id
         self.create_dttm = create_dttm
         self.file_lenth = file_lenth
 
 
     def __repr__(self) -> str:
-        return f"<AnalysisProcess {self.proc_id}, {self.file_id}, {self.create_dttm}, {self.file_lenth}>"
+        return f"<AnalysisProcess {self.proc_id}, {self.user_id}, {self.file_id}, {self.create_dttm}, {self.file_lenth}>"
 
 class UserBalance(Base):
     __tablename__ = "user_balance"

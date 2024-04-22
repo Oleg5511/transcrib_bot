@@ -1,3 +1,4 @@
+from http import HTTPStatus
 from uuid import uuid4, UUID
 from pydantic import Field, EmailStr
 from schemas.base_schema import OrjsonBaseModel
@@ -8,22 +9,21 @@ class FileInfo(OrjsonBaseModel):
 
     file_id: UUID = Field(examples=[uuid4()], description="Идентификатор файла")
     user_id: UUID = Field(examples=[uuid4()], description="Идентификатор пользователя")
-    file_name: str = Field(examples=[uuid4()], description="Название файла")
-    file_lenth: int = Field(examples=[uuid4()], description="Название файла")
+    file_name: str = Field(examples=['file_name'], description="Название файла")
+    file_lenth: int = Field(examples=[60], description="Название файла")
     create_dttm: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),
                                   description="Момент создания записи")
 
-class FileInDB(OrjsonBaseModel):
-    file_id: UUID
-    user_id: str
-    file_lenth: str
-    total_time: str
+class Response(OrjsonBaseModel):
+    status_code: str
 
-class ToTranscrib(OrjsonBaseModel):
+class ForTranscrib(OrjsonBaseModel):
     file_id: UUID
     user_id: UUID
+    file_lenth: int
 
 class FromTranscrib(OrjsonBaseModel):
+    user_id: UUID
     file_id: UUID
     status_code: int
     result: str
