@@ -10,11 +10,8 @@ from core.logger import LOGGING
 
 
 from db.postgres import purge_database
-from kafka_config.create_topic import create_topic
-from kafka_config.kafka_config import get_kafka_consumer
 
 config = get_settings()
-consumer = get_kafka_consumer(topic=config.topic_name[0], group_id=config.topic_name[0])
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -23,7 +20,6 @@ async def lifespan(app: FastAPI):
     yield
     await purge_database()
 
-create_topic(config)
 app = FastAPI(
     title=config.project_name,
     docs_url="/api/openapi",
