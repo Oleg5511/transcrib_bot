@@ -1,22 +1,20 @@
 version: '3'
 services:
 
-  postgres:
-    image: postgres:16.1
-    container_name: postgres
-    expose:
-      - "5432"
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdbdata:/var/lib/postgresql/data/
-    env_file:
-      - /src/core/.env
-
+#  postgres:
+#    image: postgres:16.1
+#    container_name: postgres
+#    expose:
+#      - "5432"
+#    ports:
+#      - "5432:5432"
+#    volumes:
+#      - pgdbdata:/var/lib/postgresql/data/
+#    env_file:
+#      - /src/core/.env
+#
   api_transcrib:
     build: .
-    depends_on:
-      - postgres
     command: bash entrypoint.sh
     env_file:
       - src/core/.env
@@ -25,6 +23,8 @@ services:
       - "8000"
     ports:
       - "8000:8000"
+
+
 
   kafka-0:
     image: bitnami/kafka:3.4

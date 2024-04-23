@@ -1,10 +1,8 @@
-import time
-
 import backoff
 import requests
 from kafka import KafkaProducer, KafkaConsumer
 from kafka.errors import NoBrokersAvailable
-from core.config import get_settings
+from config import get_settings
 
 config = get_settings()
 
@@ -19,7 +17,7 @@ config = get_settings()
 )
 def get_kafka_producer() -> KafkaProducer:
     return KafkaProducer(
-        bootstrap_servers=config.kafka_host[0]
+        bootstrap_servers=f"{config.kafka_host[0]}:9094" #config.kafka_host[0]
         )
 
 @backoff.on_exception(
@@ -35,7 +33,7 @@ def get_kafka_consumer(
 ) -> KafkaConsumer:
     return KafkaConsumer(
         topic,
-        bootstrap_servers=f"{config.kafka_host[0]}",
+        bootstrap_servers=f"{config.kafka_host[0]}:9094", #config.kafka_host[0]
         auto_offset_reset="earliest",
         group_id=group_id,
         enable_auto_commit=False,

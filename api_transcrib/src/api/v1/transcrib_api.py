@@ -13,7 +13,7 @@ config = get_settings()
 
 
 @router.post(
-    "/transcrib",
+    "/to_transcrib",
     response_model=Response
 )
 async def start_transcrib_api(
@@ -21,3 +21,4 @@ async def start_transcrib_api(
 ) -> Response:
     result = await init_transcrib(message=message)
     return result
+

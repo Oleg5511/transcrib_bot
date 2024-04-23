@@ -1,73 +1,51 @@
+import asyncio
 import json
-from http import HTTPStatus
-from fastapi import Depends, HTTPException
-# from fastapi.encoders import jsonable_encoder
-from kafka import KafkaProducer
-from sqlalchemy.ext.asyncio import AsyncSession
-# from sqlalchemy.exc import IntegrityError
-from functools import lru_cache
-import requests
-from helpers.helpers import send_for_transcrib
-from kafka_config.kafka_config import get_kafka_producer
+from sqlalchemy import select, update, delete, insert
 from schemas.schemas import FileInfo, Response, ForTranscrib
-# from schemas.schemas_entity import UserInDB
 from core.config import get_settings
-from db.postgres import get_session
-# from models.models import File
-from services.base_serv import BaseService
-import backoff
-from kafka import KafkaProducer
-from kafka.errors import NoBrokersAvailable
-
+from db.postgres import async_session
 
 config = get_settings()
-producer = get_kafka_producer()
 
-def init_transcrib( message, producer=producer) -> Response:
-    """Функция отправляет сообщение в кафку"""
+async def init_transcrib(
+    message: ForTranscrib
+):
+    """Запускает транскрибацию файла, сообщение с которым лежит в Кафке"""
+    # Получили доступный баланс пользователя
+    user_id = message.user_id
+    file_id = message.file_id
+    file_lenth = message.file_lenth
+    async with async_session() as db:
+        balance_data = await db.execute(select(UserBalance).where(UserBalance.user_id == UUID(user_id))) #get_balance(user_id)
+        in_process = await db.execute(select(AnalysisProcess).where(AnalysisProcess.user_id == UUID(user_id)))
 
-    message_kafka = {'file_id': str(message.file_id), 'user_id': str(message.user_id),
-                     'file_lenth': message.file_lenth}
-    producer.send(
-        topic='for_transcrib',
-        value=json.dumps(message_kafka).encode(),
-        key=str(message.file_id).encode(),
-        headers=[('user_id', str(message.file_id).encode())]
-    )
+        new_balance = balance_data.scalars().first().balance - in_process.scalars().first().file_lenth
 
-    response = Response(status_code='Удачно ёмаё')
-    return response
 
-message = ForTranscrib(user_id = "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                       file_id="3fa85f64-5717-4562-b3fc-2c963f66afa6", file_lenth=1)
+        if new_balance < file_lenth:
+            return Response(status_code='Не хватает баланса')
 
-r = init_transcrib(message, producer=producer)
-print(r)
-# class TranscribService(BaseService):
-#     """Сервис транскрибации"""
-#
-#     def __init__(self, session: AsyncSession):
-#         self.session = session
-#
-#     async def start_transcrib(self, message, producer: KafkaProducer) -> Response:
-#         """Функция отправляет сообщение в кафку"""
-#
-#         message_kafka = {'file_id': message.file_id, 'user_id': message.user_id,
-#                          'file_lenth': message.file_lenth}
-#         producer.send(
-#             topic='for_transcrib',
-#             value=json.dumps(message_kafka).encode(),
-#             key=message['user_id'].encode(),
-#             headers=[('user_id', message['user_id'].encode())]
-#         )
-#
-#         response = Response(status_code='Удачно ёмаё')
-#         return response
-#
-#
-# @lru_cache
-# def get_transcrib_service(
-#     session: AsyncSession = Depends(get_session),
-# ) -> TranscribService:
-#     """Возвращает синглтон сервиса"""
-#     return TranscribService(session=session)
+        # Сделать запись об обработки в Postgre
+        await db.execute(insert(AnalysisProcess).values(user_id=user_id, file_id=file_id, file_lenth=file_lenth,
+                                                        create_dttm=datetime.datetime.now(), proc_id=uuid4()))
+        await db.commit()
+
+
+        # Транскрибировать/анализировать файл
+        asyncio.sleep(10)
+        # analysed = analyse_file() # ToDo Сейчас заглушка
+
+        # # Изменить состояние баланса пользователя
+        await db.execute(
+                update(UserBalance)
+                .where(UserBalance.user_id == UUID(user_id))
+                .values(balance=new_balance)
+                )
+        # Удалить запись из analysys_process
+        await db.execute(
+             delete(AnalysisProcess)
+             .where((AnalysisProcess.user_id == UUID(user_id)) & (AnalysisProcess.file_id == UUID(file_id)))
+         )
+     # Комит обоих операций
+        await db.commit()
+    return Response(status_code='SUCCESS')
