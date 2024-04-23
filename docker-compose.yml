@@ -27,20 +27,6 @@ services:
     depends_on:
       - postgres
 
-  transcrib_process:
-    build: transcrib_process/.
-    container_name: transcrib_process
-    command: bash entrypoint.sh
-    env_file:
-      - transcrib_process/.env
-    image: transcrib_process
-    expose:
-      - "8001"
-    ports:
-      - "8001:8000"
-    depends_on:
-      - postgres
-    restart: always
 
   kafka-0:
     image: bitnami/kafka:3.4

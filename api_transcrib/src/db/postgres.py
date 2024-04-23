@@ -1,8 +1,11 @@
+from uuid import UUID
+
 import backoff
 import requests
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from core.config import get_settings
+
 
 config = get_settings()
 
@@ -22,7 +25,6 @@ async def get_session() -> AsyncSession:
             raise
         finally:
             await session.close()
-
 
 async def create_database() -> None:
     async with engine.begin() as conn:

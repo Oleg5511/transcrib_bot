@@ -115,8 +115,9 @@ class UserBalance(Base):
     balance = Column(Integer)
 
     def __init__(
-        self, balance: str
+        self, balance: str, user_id: str
     ) -> None:
+        self.user_id = user_id
         self.balance = balance
 
 

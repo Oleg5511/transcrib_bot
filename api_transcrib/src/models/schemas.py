@@ -18,9 +18,10 @@ class Response(OrjsonBaseModel):
     status_code: str
 
 class ForTranscrib(OrjsonBaseModel):
-    file_id: UUID
-    user_id: UUID
-    file_lenth: int
+    file_id:  UUID = Field(examples=[uuid4()], description="Идентификатор файла")
+    user_id: str = Field(default='23bbdc04-66dc-41ea-a315-7ec302df478d',
+                          description="Идентификатор пользователя")
+    file_lenth: int = Field(examples=[60], description="Длина файла")
 
 class FromTranscrib(OrjsonBaseModel):
     user_id: UUID
