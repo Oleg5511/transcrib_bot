@@ -4,8 +4,10 @@ import time
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException
-from sqlalchemy import select, update, delete, insert
+from sqlalchemy import select, update, delete, insert, func
 from schemas.schemas import FileInfo, Response, ForTranscrib
+from sqlalchemy.orm import aliased
+
 from core.config import get_settings
 from db.postgres import async_session
 from models import UserBalance, AnalysisProcess
@@ -21,16 +23,15 @@ async def init_transcrib(
     file_id = message.file_id
     file_lenth = message.file_lenth
     async with async_session() as db:
-        balance_data = await db.execute(select(UserBalance).where(UserBalance.user_id == user_id))
-        in_process = await db.execute(select(AnalysisProcess).where(AnalysisProcess.user_id == user_id))
+        user_balance = await db.execute(select(UserBalance.balance).where(UserBalance.user_id == user_id))
+        in_process = await db.execute(select(func.sum(AnalysisProcess.file_lenth)).where(AnalysisProcess.user_id == user_id))
 
-        user_balance = balance_data.scalars().first()
         if not user_balance:
             raise HTTPException(404, detail="User not in DB")
-        curr_balance = user_balance.balance
-        reserved_balance = in_process.scalars().first()
+        curr_balance = user_balance.first()[0]
+        reserved_balance = in_process.scalars().all()[0]
 
-        new_balance = (curr_balance - reserved_balance.file_lenth
+        new_balance = (curr_balance - reserved_balance
                        if reserved_balance else curr_balance)
 
         if new_balance < file_lenth:
@@ -59,5 +60,4 @@ async def init_transcrib(
          )
      # Комит обоих операций
         await db.commit()
-
     return Response(status_code='SUCCESS') # В ответе возвращать analysed из функции транскрибации

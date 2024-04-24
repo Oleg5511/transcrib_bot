@@ -24,8 +24,8 @@ class Settings(BaseSettings):
 
     # Настройки Postgres
     postgres_db: str = Field("transcrib", description="Название БД Postgres")
-    postgres_user: str = Field("admin", description="Пользователь Postgres")
-    postgres_password: str = Field("admin", description="Пароль Postgres")
+    postgres_user: str = Field("postgres", description="Пользователь Postgres")
+    postgres_password: str = Field("Ergtsop1673626", description="Пароль Postgres")
     postgres_host: str = Field("127.0.0.1", description="Хост Postgres")
     postgres_port: int = Field(5432, description="Порт Postgres")
 
